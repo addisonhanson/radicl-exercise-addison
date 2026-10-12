@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { HealthStatus } from '../types/api'
+import type { AnalyticsSummary, HealthStatus } from '../types/api'
 
 // Build the API URL from the environment.
 // Render provides service names like "radicl-node-service" via property: host,
@@ -32,7 +32,12 @@ interface AppState {
   healthError: string | null
   healthLoading: boolean
 
+  summary: AnalyticsSummary | null
+  summaryError: string | null
+  summaryLoading: boolean
+
   fetchHealthStatus: () => Promise<void>
+  fetchSummary: () => Promise<void>
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -53,5 +58,26 @@ export const useAppStore = create<AppState>((set) => ({
       set({ health: null, healthError: 'API unavailable' })
     }
     set({ healthLoading: false })
+  },
+
+  summary: null,
+  summaryError: null,
+  summaryLoading: true,
+
+  // On failure the last good summary is kept so the cards don't blank out.
+  fetchSummary: async () => {
+    set({ summaryLoading: true })
+    try {
+      const response = await fetch(`${API_URL}/api/analytics/summary`)
+      if (!response.ok) {
+        throw new Error(`Analytics summary failed with status ${response.status}`)
+      }
+      const body = (await response.json()) as { data: AnalyticsSummary }
+      set({ summary: body.data, summaryError: null })
+    } catch (error) {
+      console.error('Error fetching analytics summary:', error)
+      set({ summaryError: 'Analytics unavailable' })
+    }
+    set({ summaryLoading: false })
   },
 }))
