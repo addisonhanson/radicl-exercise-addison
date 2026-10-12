@@ -23,6 +23,8 @@ const fakes = {
   dbUp: true,
   goUp: true,
   summaryError: null as Error | null,
+  // The ?days value the timeline route passed to the Go client
+  timelineDays: undefined as string | undefined,
 };
 
 const pool = {
@@ -37,8 +39,11 @@ const go: GoClient = {
     if (fakes.summaryError) throw fakes.summaryError;
     return summary;
   },
-  // Stubbed until timeline, open events, assets and origins route tests are added.
-  getTimeline: async () => ({ generated_at: '', days: 30, buckets: [] }),
+  getTimeline: async (days) => {
+    fakes.timelineDays = days;
+    return { generated_at: '', days: 30, buckets: [] };
+  },
+  // Stubbed until open events, assets and origins route tests are added.
   getOpenEvents: async () => ({
     generated_at: '',
     total: 0,
@@ -67,6 +72,7 @@ function reset() {
   fakes.dbUp = true;
   fakes.goUp = true;
   fakes.summaryError = null;
+  fakes.timelineDays = undefined;
 }
 
 async function get(path: string) {
@@ -96,6 +102,21 @@ describe('GET /api/analytics/summary', () => {
     const { status, body } = await get('/api/analytics/summary');
     assert.equal(status, 500);
     assert.deepEqual(body, { error: 'Internal server error' });
+  });
+});
+
+describe('GET /api/analytics/timeline', () => {
+  it('forwards a single ?days value to Go for validation', async () => {
+    reset();
+    const { status } = await get('/api/analytics/timeline?days=7');
+    assert.equal(status, 200);
+    assert.equal(fakes.timelineDays, '7');
+  });
+
+  it('drops a repeated ?days so Go applies its default', async () => {
+    reset();
+    await get('/api/analytics/timeline?days=7&days=14');
+    assert.equal(fakes.timelineDays, undefined);
   });
 });
 

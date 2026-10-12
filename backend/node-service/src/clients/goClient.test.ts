@@ -16,6 +16,10 @@ before(async () => {
       res.writeHead(status, { 'Content-Type': 'application/json' });
       res.end(body);
     };
+    // Echoes the requested path and query so tests can check URL building
+    if (req.url?.startsWith('/echo/')) {
+      return send(200, JSON.stringify({ data: { url: req.url } }));
+    }
     switch (req.url) {
       case '/ok/api/analytics/summary':
         return send(200, JSON.stringify({ data: { generated_at: 'now' } }));
@@ -83,6 +87,16 @@ describe('GoClient.getSummary', () => {
   it('maps a refused connection to 503', async () => {
     const unreachable = createGoClient({ baseUrl: closedPortUrl, timeoutMs: 200 });
     await assertHttpError(unreachable.getSummary(), 503, 'Analytics service unavailable');
+  });
+});
+
+describe('GoClient.getTimeline', () => {
+  it('adds ?days only when given', async () => {
+    // The echo server returns { url } rather than a real Timeline
+    const urlOf = async (days?: string) =>
+      ((await client('/echo').getTimeline(days)) as unknown as { url: string }).url;
+    assert.equal(await urlOf('7'), '/echo/api/analytics/timeline?days=7');
+    assert.equal(await urlOf(), '/echo/api/analytics/timeline');
   });
 });
 

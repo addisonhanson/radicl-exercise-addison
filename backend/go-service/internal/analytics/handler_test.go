@@ -16,6 +16,7 @@ type fakeQuerier struct {
 	summary Summary
 	err     error
 	gotNow  time.Time
+	gotDays int // 0 if no windowed query was made
 }
 
 func (f *fakeQuerier) Summary(_ context.Context, now time.Time) (Summary, error) {
@@ -23,9 +24,8 @@ func (f *fakeQuerier) Summary(_ context.Context, now time.Time) (Summary, error)
 	return f.summary, f.err
 }
 
-// Timeline is stubbed until timeline handler tests are added.
 func (f *fakeQuerier) Timeline(_ context.Context, now time.Time, days int) (Timeline, error) {
-	f.gotNow = now
+	f.gotNow, f.gotDays = now, days
 	return Timeline{GeneratedAt: now, Days: days}, f.err
 }
 
@@ -41,9 +41,8 @@ func (f *fakeQuerier) AssetsAtRisk(_ context.Context, now time.Time) (AssetsAtRi
 	return AssetsAtRiskList{GeneratedAt: now}, f.err
 }
 
-// ThreatOrigins is stubbed until threat origins handler tests are added.
 func (f *fakeQuerier) ThreatOrigins(_ context.Context, now time.Time, days int) (ThreatOrigins, error) {
-	f.gotNow = now
+	f.gotNow, f.gotDays = now, days
 	return ThreatOrigins{GeneratedAt: now, Days: days}, f.err
 }
 
@@ -129,5 +128,39 @@ func TestSummaryRejectsWrongMethod(t *testing.T) {
 
 	if rec.Code != http.StatusMethodNotAllowed {
 		t.Fatalf("status = %d, want 405", rec.Code)
+	}
+}
+
+// Both windowed endpoints share parseDays: a missing ?days= uses the
+// default, and anything outside 1-90 is a 400 that never reaches the store.
+func TestWindowedEndpointsDaysParam(t *testing.T) {
+	cases := []struct {
+		query      string
+		wantStatus int
+		wantDays   int
+	}{
+		{"", http.StatusOK, defaultDays},
+		{"?days=7", http.StatusOK, 7},
+		{"?days=90", http.StatusOK, 90},
+		{"?days=0", http.StatusBadRequest, 0},
+		{"?days=91", http.StatusBadRequest, 0},
+		{"?days=abc", http.StatusBadRequest, 0},
+	}
+
+	for _, path := range []string{"/api/analytics/timeline", "/api/analytics/threat-origins"} {
+		for _, tc := range cases {
+			t.Run(path+tc.query, func(t *testing.T) {
+				fake := &fakeQuerier{}
+				rec := httptest.NewRecorder()
+				newTestRouter(fake, time.Now()).ServeHTTP(rec, httptest.NewRequest(http.MethodGet, path+tc.query, nil))
+
+				if rec.Code != tc.wantStatus {
+					t.Fatalf("status = %d, want %d", rec.Code, tc.wantStatus)
+				}
+				if fake.gotDays != tc.wantDays {
+					t.Errorf("store called with days = %d, want %d", fake.gotDays, tc.wantDays)
+				}
+			})
+		}
 	}
 }
