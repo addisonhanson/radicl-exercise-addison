@@ -29,6 +29,12 @@ func (f *fakeQuerier) Timeline(_ context.Context, now time.Time, days int) (Time
 	return Timeline{GeneratedAt: now, Days: days}, f.err
 }
 
+// OpenEvents is stubbed until open events handler tests are added.
+func (f *fakeQuerier) OpenEvents(_ context.Context, now time.Time) (OpenEvents, error) {
+	f.gotNow = now
+	return OpenEvents{GeneratedAt: now}, f.err
+}
+
 func newTestRouter(q Querier, now time.Time) *mux.Router {
 	h := NewHandler(q)
 	h.now = func() time.Time { return now }

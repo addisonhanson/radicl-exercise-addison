@@ -17,5 +17,10 @@ export function analyticsRouter(go: GoClient): Router {
     res.json({ data });
   });
 
+  router.get('/open-events', async (_req, res) => {
+    const data = await go.getOpenEvents();
+    res.json({ data });
+  });
+
   return router;
 }

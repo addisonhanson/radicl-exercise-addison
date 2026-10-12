@@ -27,6 +27,7 @@ const (
 type Querier interface {
 	Summary(ctx context.Context, now time.Time) (Summary, error)
 	Timeline(ctx context.Context, now time.Time, days int) (Timeline, error)
+	OpenEvents(ctx context.Context, now time.Time) (OpenEvents, error)
 }
 
 // Handler serves the /api/analytics endpoints.
@@ -46,6 +47,7 @@ func (h *Handler) RegisterRoutes(r *mux.Router) {
 	// mux v1.8.1 subrouters report a wrong method as 404 instead of 405.
 	r.HandleFunc("/api/analytics/summary", h.summary).Methods(http.MethodGet)
 	r.HandleFunc("/api/analytics/timeline", h.timeline).Methods(http.MethodGet)
+	r.HandleFunc("/api/analytics/open-events", h.openEvents).Methods(http.MethodGet)
 }
 
 // summary handles GET /api/analytics/summary.
@@ -87,4 +89,19 @@ func (h *Handler) timeline(w http.ResponseWriter, r *http.Request) {
 	}
 
 	httpx.WriteData(w, tl)
+}
+
+// openEvents handles GET /api/analytics/open-events.
+func (h *Handler) openEvents(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), queryTimeout)
+	defer cancel()
+
+	open, err := h.store.OpenEvents(ctx, h.now().UTC())
+	if err != nil {
+		log.Printf("Error listing open events: %v", err)
+		httpx.WriteError(w, http.StatusInternalServerError, "Failed to load open events")
+		return
+	}
+
+	httpx.WriteData(w, open)
 }
