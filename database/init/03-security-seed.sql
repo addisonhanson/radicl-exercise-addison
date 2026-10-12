@@ -55,8 +55,11 @@ INSERT INTO assets (hostname, asset_type, environment, criticality, ip_address, 
 -- ============================================
 -- Threat Intelligence
 -- ============================================
--- first_seen/last_seen are widened at the end of this file to cover every
--- event linked to the threat.
+-- first_seen/last_seen double as each threat's activity window: generated
+-- events only link to a threat inside it. Some threats are long-running,
+-- some are new this week and one has gone quiet, so "active campaigns"
+-- changes week to week. The window is widened at the end of this file to
+-- cover every linked event.
 
 INSERT INTO threat_intelligence (threat_name, threat_category, risk_level, description, indicators_of_compromise, first_seen, last_seen) VALUES
 ('Emotet Banking Trojan', 'Malware', 'Critical',
@@ -72,7 +75,7 @@ INSERT INTO threat_intelligence (threat_name, threat_category, risk_level, descr
 ('Mirai Botnet DDoS', 'DDoS', 'Medium',
  'IoT botnet conducting volumetric DDoS attacks against web infrastructure.',
  '{"ip_ranges": ["203.0.113.0/24"], "user_agents": ["Mozilla/5.0 (X11; Linux)"]}',
- NOW() - INTERVAL '10 days', NOW() - INTERVAL '5 hours'),
+ NOW() - INTERVAL '5 days', NOW() - INTERVAL '5 hours'),
 
 ('APT41 Reconnaissance', 'Intrusion', 'Critical',
  'Advanced persistent threat group conducting network reconnaissance and data exfiltration attempts.',
@@ -82,7 +85,7 @@ INSERT INTO threat_intelligence (threat_name, threat_category, risk_level, descr
 ('Cryptomining Software', 'Suspicious Activity', 'Medium',
  'Unauthorized cryptocurrency mining software detected on workstations, consuming CPU resources.',
  '{"processes": ["xmrig.exe"], "domains": ["pool.minexmr[.]com:4444"]}',
- NOW() - INTERVAL '7 days', NOW() - INTERVAL '3 hours'),
+ NOW() - INTERVAL '6 days', NOW() - INTERVAL '3 hours'),
 
 ('LockBit 3.0 Ransomware', 'Ransomware', 'Critical',
  'Ransomware-as-a-service operation that encrypts file shares and exfiltrates data for double extortion.',
@@ -92,12 +95,12 @@ INSERT INTO threat_intelligence (threat_name, threat_category, risk_level, descr
 ('Cobalt Strike Beacon', 'Intrusion', 'High',
  'Post-exploitation framework beacons used for command and control and lateral movement.',
  '{"domains": ["cdn-update-check[.]net"], "ja3": ["72a589da586844d7f0818ce684948eea"]}',
- NOW() - INTERVAL '25 days', NOW() - INTERVAL '6 hours'),
+ NOW() - INTERVAL '25 days', NOW() - INTERVAL '12 days'),
 
 ('Cloud Storage Exfiltration', 'Data Breach', 'High',
  'Bulk downloads from misconfigured or over-permissioned cloud storage by compromised credentials.',
  '{"behaviors": ["ListObjects burst", "GetObject from new ASN"]}',
- NOW() - INTERVAL '20 days', NOW() - INTERVAL '8 minutes');
+ NOW() - INTERVAL '4 days', NOW() - INTERVAL '8 minutes');
 
 -- ============================================
 -- Generated Security Events
@@ -303,13 +306,16 @@ CROSS JOIN LATERAL (
     ORDER BY random(), l.n  -- l.n forces per-row evaluation
     LIMIT 1
 ) a
--- Campaign events link to their campaign; ~40% of others to a matching threat
+-- Campaign events link to their campaign; ~40% of others to a matching
+-- threat that was active when the event occurred
 LEFT JOIN LATERAL (
     SELECT threat_id
     FROM threat_intelligence
     WHERE CASE
         WHEN l.forced_threat IS NOT NULL THEN threat_name = l.forced_threat
-        ELSE threat_category = l.event_type AND l.threat_link_r < 0.4
+        ELSE threat_category = l.event_type
+             AND l.threat_link_r < 0.4
+             AND l.occurred_at BETWEEN first_seen AND last_seen
     END
     ORDER BY random(), l.n
     LIMIT 1

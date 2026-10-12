@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
+	"github.com/radicl/go-service/internal/analytics"
 	"github.com/rs/cors"
 )
 
@@ -159,6 +160,8 @@ func main() {
 	r.HandleFunc("/api/health", healthHandler).Methods("GET")
 	r.HandleFunc("/api/go/hello", helloHandler).Methods("GET")
 	r.HandleFunc("/api/go/data", dataHandler).Methods("GET")
+
+	analytics.NewHandler(analytics.NewStore(dbPool)).RegisterRoutes(r)
 
 	// CORS
 	handler := cors.New(cors.Options{
