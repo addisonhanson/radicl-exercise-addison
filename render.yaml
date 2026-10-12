@@ -40,6 +40,12 @@ services:
         value: 3001
       - key: NODE_ENV
         value: production
+      # Node proxies analytics requests to the Go service
+      - key: GO_SERVICE_URL
+        fromService:
+          name: radicl-go-service
+          type: web
+          property: host
     healthCheckPath: /api/health
 
   # Go Backend Service (Optional)
