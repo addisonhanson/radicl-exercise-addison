@@ -10,6 +10,8 @@
 
 **Repository URL:** https://github.com/addisonhanson/radicl-exercise-addison
 
+**Collaborator Access:** Invited EliasOrtizRAD, mdpete4, FrankHassanabad and nickcarnival on 2026-10-12. The repo is owned by a personal account, which can't grant read-only access, so the invitations are standard collaborator invitations.
+
 **Date Submitted:** 2026-10-12
 
 **Time Spent:** ~4 hours
