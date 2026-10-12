@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
-import { Box, Container } from '@mui/material'
+import { Box, Container, Stack } from '@mui/material'
+import { ChartTabs } from './components/ChartTabs'
 import { Header } from './components/Header'
 import { KpiGrid } from './components/KpiGrid'
 import { ServiceStatus } from './components/ServiceStatus'
@@ -8,17 +9,22 @@ import { useAppStore } from './store/useAppStore'
 function App() {
   const fetchHealthStatus = useAppStore((state) => state.fetchHealthStatus)
   const fetchSummary = useAppStore((state) => state.fetchSummary)
+  const fetchTimeline = useAppStore((state) => state.fetchTimeline)
 
   useEffect(() => {
     fetchHealthStatus()
     fetchSummary()
-  }, [fetchHealthStatus, fetchSummary])
+    fetchTimeline()
+  }, [fetchHealthStatus, fetchSummary, fetchTimeline])
 
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Header />
       <Container maxWidth="xl" component="main" sx={{ py: 3, px: { xs: 2, md: 4 }, flexGrow: 1 }}>
-        <KpiGrid />
+        <Stack spacing={3}>
+          <KpiGrid />
+          <ChartTabs />
+        </Stack>
       </Container>
       <Box component="footer" sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
         <ServiceStatus />

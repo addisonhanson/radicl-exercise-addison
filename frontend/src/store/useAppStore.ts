@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { AnalyticsSummary, HealthStatus } from '../types/api'
+import type { AnalyticsSummary, HealthStatus, Timeline } from '../types/api'
 
 // Build the API URL from the environment.
 // Render provides service names like "radicl-node-service" via property: host,
@@ -36,8 +36,13 @@ interface AppState {
   summaryError: string | null
   summaryLoading: boolean
 
+  timeline: Timeline | null
+  timelineError: string | null
+  timelineLoading: boolean
+
   fetchHealthStatus: () => Promise<void>
   fetchSummary: () => Promise<void>
+  fetchTimeline: () => Promise<void>
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -79,5 +84,25 @@ export const useAppStore = create<AppState>((set) => ({
       set({ summaryError: 'Analytics unavailable' })
     }
     set({ summaryLoading: false })
+  },
+
+  timeline: null,
+  timelineError: null,
+  timelineLoading: true,
+
+  fetchTimeline: async () => {
+    set({ timelineLoading: true })
+    try {
+      const response = await fetch(`${API_URL}/api/analytics/timeline`)
+      if (!response.ok) {
+        throw new Error(`Event timeline failed with status ${response.status}`)
+      }
+      const body = (await response.json()) as { data: Timeline }
+      set({ timeline: body.data, timelineError: null })
+    } catch (error) {
+      console.error('Error fetching event timeline:', error)
+      set({ timelineError: 'Event timeline unavailable' })
+    }
+    set({ timelineLoading: false })
   },
 }))

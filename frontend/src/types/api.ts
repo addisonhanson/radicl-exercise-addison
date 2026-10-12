@@ -42,3 +42,22 @@ export interface AnalyticsSummary {
   mttr_7d: DurationComparison
   active_threat_campaigns_7d: CountComparison
 }
+
+// Response for GET /api/analytics/timeline. Each bucket counts events that
+// occurred in (start, end], a rolling 24 hour window, oldest first.
+// Recharts needs a type alias rather than an interface for chart data.
+export type TimelineBucket = {
+  start: string
+  end: string
+  critical: number
+  high: number
+  medium: number
+  low: number
+  total: number
+}
+
+export interface Timeline {
+  generated_at: string
+  days: number
+  buckets: TimelineBucket[]
+}
