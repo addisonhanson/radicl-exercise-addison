@@ -12,8 +12,7 @@ export function analyticsRouter(go: GoClient): Router {
   });
 
   router.get('/timeline', async (req, res) => {
-    const { days } = req.query;
-    const data = await go.getTimeline(typeof days === 'string' ? days : undefined);
+    const data = await go.getTimeline(daysParam(req.query.days));
     res.json({ data });
   });
 
@@ -22,5 +21,21 @@ export function analyticsRouter(go: GoClient): Router {
     res.json({ data });
   });
 
+  router.get('/assets-at-risk', async (_req, res) => {
+    const data = await go.getAssetsAtRisk();
+    res.json({ data });
+  });
+
+  router.get('/threat-origins', async (req, res) => {
+    const data = await go.getThreatOrigins(daysParam(req.query.days));
+    res.json({ data });
+  });
+
   return router;
+}
+
+// Only a single string ?days= is forwarded; repeated or nested values are
+// dropped and Go applies its default.
+function daysParam(value: unknown): string | undefined {
+  return typeof value === 'string' ? value : undefined;
 }

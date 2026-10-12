@@ -16,10 +16,10 @@ import (
 // queryTimeout bounds how long a single analytics query may run.
 const queryTimeout = 5 * time.Second
 
-// Bounds for the timeline's ?days= parameter.
+// Bounds for the ?days= parameter on windowed endpoints.
 const (
-	defaultTimelineDays = 30
-	maxTimelineDays     = 90
+	defaultDays = 30
+	maxDays     = 90
 )
 
 // Querier is the data access the handlers need. *Store implements it; tests
@@ -28,6 +28,8 @@ type Querier interface {
 	Summary(ctx context.Context, now time.Time) (Summary, error)
 	Timeline(ctx context.Context, now time.Time, days int) (Timeline, error)
 	OpenEvents(ctx context.Context, now time.Time) (OpenEvents, error)
+	AssetsAtRisk(ctx context.Context, now time.Time) (AssetsAtRiskList, error)
+	ThreatOrigins(ctx context.Context, now time.Time, days int) (ThreatOrigins, error)
 }
 
 // Handler serves the /api/analytics endpoints.
@@ -48,6 +50,8 @@ func (h *Handler) RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/api/analytics/summary", h.summary).Methods(http.MethodGet)
 	r.HandleFunc("/api/analytics/timeline", h.timeline).Methods(http.MethodGet)
 	r.HandleFunc("/api/analytics/open-events", h.openEvents).Methods(http.MethodGet)
+	r.HandleFunc("/api/analytics/assets-at-risk", h.assetsAtRisk).Methods(http.MethodGet)
+	r.HandleFunc("/api/analytics/threat-origins", h.threatOrigins).Methods(http.MethodGet)
 }
 
 // summary handles GET /api/analytics/summary.
@@ -67,15 +71,9 @@ func (h *Handler) summary(w http.ResponseWriter, r *http.Request) {
 
 // timeline handles GET /api/analytics/timeline?days=N.
 func (h *Handler) timeline(w http.ResponseWriter, r *http.Request) {
-	days := defaultTimelineDays
-	if raw := r.URL.Query().Get("days"); raw != "" {
-		n, err := strconv.Atoi(raw)
-		if err != nil || n < 1 || n > maxTimelineDays {
-			httpx.WriteError(w, http.StatusBadRequest,
-				fmt.Sprintf("days must be an integer between 1 and %d", maxTimelineDays))
-			return
-		}
-		days = n
+	days, ok := parseDays(w, r)
+	if !ok {
+		return
 	}
 
 	ctx, cancel := context.WithTimeout(r.Context(), queryTimeout)
@@ -104,4 +102,55 @@ func (h *Handler) openEvents(w http.ResponseWriter, r *http.Request) {
 	}
 
 	httpx.WriteData(w, open)
+}
+
+// assetsAtRisk handles GET /api/analytics/assets-at-risk.
+func (h *Handler) assetsAtRisk(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), queryTimeout)
+	defer cancel()
+
+	assets, err := h.store.AssetsAtRisk(ctx, h.now().UTC())
+	if err != nil {
+		log.Printf("Error listing assets at risk: %v", err)
+		httpx.WriteError(w, http.StatusInternalServerError, "Failed to load assets at risk")
+		return
+	}
+
+	httpx.WriteData(w, assets)
+}
+
+// threatOrigins handles GET /api/analytics/threat-origins?days=N.
+func (h *Handler) threatOrigins(w http.ResponseWriter, r *http.Request) {
+	days, ok := parseDays(w, r)
+	if !ok {
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), queryTimeout)
+	defer cancel()
+
+	origins, err := h.store.ThreatOrigins(ctx, h.now().UTC(), days)
+	if err != nil {
+		log.Printf("Error building threat origins: %v", err)
+		httpx.WriteError(w, http.StatusInternalServerError, "Failed to load threat origins")
+		return
+	}
+
+	httpx.WriteData(w, origins)
+}
+
+// parseDays reads the optional ?days= window, defaulting to defaultDays.
+// An invalid value writes a 400 and returns ok=false.
+func parseDays(w http.ResponseWriter, r *http.Request) (days int, ok bool) {
+	raw := r.URL.Query().Get("days")
+	if raw == "" {
+		return defaultDays, true
+	}
+	n, err := strconv.Atoi(raw)
+	if err != nil || n < 1 || n > maxDays {
+		httpx.WriteError(w, http.StatusBadRequest,
+			fmt.Sprintf("days must be an integer between 1 and %d", maxDays))
+		return 0, false
+	}
+	return n, true
 }

@@ -37,7 +37,7 @@ const go: GoClient = {
     if (fakes.summaryError) throw fakes.summaryError;
     return summary;
   },
-  // Stubbed until timeline and open events route tests are added.
+  // Stubbed until timeline, open events, assets and origins route tests are added.
   getTimeline: async () => ({ generated_at: '', days: 30, buckets: [] }),
   getOpenEvents: async () => ({
     generated_at: '',
@@ -45,6 +45,8 @@ const go: GoClient = {
     by_severity: { critical: 0, high: 0, medium: 0, low: 0 },
     events: [],
   }),
+  getAssetsAtRisk: async () => ({ generated_at: '', assets: [] }),
+  getThreatOrigins: async () => ({ generated_at: '', days: 30, total: 0, unknown: 0, countries: [] }),
   ping: async () => fakes.goUp,
 };
 

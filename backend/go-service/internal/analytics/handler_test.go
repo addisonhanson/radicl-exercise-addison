@@ -35,6 +35,18 @@ func (f *fakeQuerier) OpenEvents(_ context.Context, now time.Time) (OpenEvents, 
 	return OpenEvents{GeneratedAt: now}, f.err
 }
 
+// AssetsAtRisk is stubbed until assets handler tests are added.
+func (f *fakeQuerier) AssetsAtRisk(_ context.Context, now time.Time) (AssetsAtRiskList, error) {
+	f.gotNow = now
+	return AssetsAtRiskList{GeneratedAt: now}, f.err
+}
+
+// ThreatOrigins is stubbed until threat origins handler tests are added.
+func (f *fakeQuerier) ThreatOrigins(_ context.Context, now time.Time, days int) (ThreatOrigins, error) {
+	f.gotNow = now
+	return ThreatOrigins{GeneratedAt: now, Days: days}, f.err
+}
+
 func newTestRouter(q Querier, now time.Time) *mux.Router {
 	h := NewHandler(q)
 	h.now = func() time.Time { return now }
