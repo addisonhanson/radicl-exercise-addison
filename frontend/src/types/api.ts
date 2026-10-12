@@ -61,3 +61,35 @@ export interface Timeline {
   days: number
   buckets: TimelineBucket[]
 }
+
+// Response for GET /api/analytics/open-events: every open event (Active or
+// Investigating) with counts by severity. total matches open_incidents.current.
+export type Severity = 'Critical' | 'High' | 'Medium' | 'Low'
+
+export interface SeverityCounts {
+  critical: number
+  high: number
+  medium: number
+  low: number
+}
+
+export type OpenEventItem = {
+  event_id: number
+  detected_at: string
+  severity: Severity
+  event_type: string
+  status: 'Active' | 'Investigating'
+  threat_score: number
+  hostname: string
+  environment: string
+  source_ip: string | null
+  source_country: string | null
+  threat_name: string | null
+}
+
+export interface OpenEvents {
+  generated_at: string
+  total: number
+  by_severity: SeverityCounts
+  events: OpenEventItem[]
+}

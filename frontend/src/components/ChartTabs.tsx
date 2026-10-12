@@ -1,6 +1,7 @@
 import { useState, type ComponentType } from 'react'
 import { Box, Card, Tab, Tabs } from '@mui/material'
 import { EventTimelineChart } from './charts/EventTimelineChart'
+import { OpenIncidentsChart } from './charts/OpenIncidentsChart'
 
 interface ChartTab {
   label: string
@@ -11,6 +12,7 @@ interface ChartTab {
 // tab is mounted, so hidden charts don't render or measure a zero width.
 const tabs: ChartTab[] = [
   { label: 'Events Timeline', Chart: EventTimelineChart },
+  { label: 'Open Incidents', Chart: OpenIncidentsChart },
 ]
 
 export function ChartTabs() {

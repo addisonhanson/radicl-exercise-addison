@@ -10,12 +10,14 @@ function App() {
   const fetchHealthStatus = useAppStore((state) => state.fetchHealthStatus)
   const fetchSummary = useAppStore((state) => state.fetchSummary)
   const fetchTimeline = useAppStore((state) => state.fetchTimeline)
+  const fetchOpenEvents = useAppStore((state) => state.fetchOpenEvents)
 
   useEffect(() => {
     fetchHealthStatus()
     fetchSummary()
     fetchTimeline()
-  }, [fetchHealthStatus, fetchSummary, fetchTimeline])
+    fetchOpenEvents()
+  }, [fetchHealthStatus, fetchSummary, fetchTimeline, fetchOpenEvents])
 
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>

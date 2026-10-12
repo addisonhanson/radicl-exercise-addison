@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { AnalyticsSummary, HealthStatus, Timeline } from '../types/api'
+import type { AnalyticsSummary, HealthStatus, OpenEvents, Timeline } from '../types/api'
 
 // Build the API URL from the environment.
 // Render provides service names like "radicl-node-service" via property: host,
@@ -40,9 +40,14 @@ interface AppState {
   timelineError: string | null
   timelineLoading: boolean
 
+  openEvents: OpenEvents | null
+  openEventsError: string | null
+  openEventsLoading: boolean
+
   fetchHealthStatus: () => Promise<void>
   fetchSummary: () => Promise<void>
   fetchTimeline: () => Promise<void>
+  fetchOpenEvents: () => Promise<void>
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -104,5 +109,25 @@ export const useAppStore = create<AppState>((set) => ({
       set({ timelineError: 'Event timeline unavailable' })
     }
     set({ timelineLoading: false })
+  },
+
+  openEvents: null,
+  openEventsError: null,
+  openEventsLoading: true,
+
+  fetchOpenEvents: async () => {
+    set({ openEventsLoading: true })
+    try {
+      const response = await fetch(`${API_URL}/api/analytics/open-events`)
+      if (!response.ok) {
+        throw new Error(`Open events failed with status ${response.status}`)
+      }
+      const body = (await response.json()) as { data: OpenEvents }
+      set({ openEvents: body.data, openEventsError: null })
+    } catch (error) {
+      console.error('Error fetching open events:', error)
+      set({ openEventsError: 'Open incidents unavailable' })
+    }
+    set({ openEventsLoading: false })
   },
 }))
