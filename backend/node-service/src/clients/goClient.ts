@@ -1,5 +1,5 @@
 import { HttpError } from '../http/errors.js';
-import type { AnalyticsSummary } from '../types/analytics.js';
+import type { AnalyticsSummary, Timeline } from '../types/analytics.js';
 
 // Typed client for the Go analytics service. Failures are mapped to
 // HttpErrors so routes can let them propagate to the error handler:
@@ -9,6 +9,8 @@ import type { AnalyticsSummary } from '../types/analytics.js';
 //   Go 5xx / bad body   -> 502
 export interface GoClient {
   getSummary(): Promise<AnalyticsSummary>;
+  // days is passed through as-is; Go validates it and its 400 is relayed.
+  getTimeline(days?: string): Promise<Timeline>;
   ping(): Promise<boolean>;
 }
 
@@ -46,6 +48,11 @@ export function createGoClient({ baseUrl, timeoutMs }: GoClientOptions): GoClien
 
   return {
     getSummary: () => request<AnalyticsSummary>('/api/analytics/summary'),
+
+    getTimeline: (days) => {
+      const query = days === undefined ? '' : `?${new URLSearchParams({ days })}`;
+      return request<Timeline>(`/api/analytics/timeline${query}`);
+    },
 
     async ping() {
       try {

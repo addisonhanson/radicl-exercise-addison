@@ -11,5 +11,11 @@ export function analyticsRouter(go: GoClient): Router {
     res.json({ data });
   });
 
+  router.get('/timeline', async (req, res) => {
+    const { days } = req.query;
+    const data = await go.getTimeline(typeof days === 'string' ? days : undefined);
+    res.json({ data });
+  });
+
   return router;
 }

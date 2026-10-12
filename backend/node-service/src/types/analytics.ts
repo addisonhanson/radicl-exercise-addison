@@ -29,3 +29,21 @@ export interface AnalyticsSummary {
   mttr_7d: DurationComparison;
   active_threat_campaigns_7d: CountComparison;
 }
+
+// Daily event counts by severity. Each bucket covers (start, end], a rolling
+// 24 hour window, oldest first.
+export interface TimelineBucket {
+  start: string;
+  end: string;
+  critical: number;
+  high: number;
+  medium: number;
+  low: number;
+  total: number;
+}
+
+export interface Timeline {
+  generated_at: string;
+  days: number;
+  buckets: TimelineBucket[];
+}

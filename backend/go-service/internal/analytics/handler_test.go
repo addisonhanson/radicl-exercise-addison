@@ -23,6 +23,12 @@ func (f *fakeQuerier) Summary(_ context.Context, now time.Time) (Summary, error)
 	return f.summary, f.err
 }
 
+// Timeline is stubbed until timeline handler tests are added.
+func (f *fakeQuerier) Timeline(_ context.Context, now time.Time, days int) (Timeline, error) {
+	f.gotNow = now
+	return Timeline{GeneratedAt: now, Days: days}, f.err
+}
+
 func newTestRouter(q Querier, now time.Time) *mux.Router {
 	h := NewHandler(q)
 	h.now = func() time.Time { return now }

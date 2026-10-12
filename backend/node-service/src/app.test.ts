@@ -37,6 +37,8 @@ const go: GoClient = {
     if (fakes.summaryError) throw fakes.summaryError;
     return summary;
   },
+  // Stubbed until timeline route tests are added.
+  getTimeline: async () => ({ generated_at: '', days: 30, buckets: [] }),
   ping: async () => fakes.goUp,
 };
 
