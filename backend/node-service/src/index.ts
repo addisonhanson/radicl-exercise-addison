@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { type NextFunction, type Request, type Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import pkg from 'pg';
@@ -7,7 +7,15 @@ const { Pool } = pkg;
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = Number(process.env.PORT) || 3001;
+
+interface DataItem {
+  id: number;
+  name: string;
+  type: string;
+  description: string | null;
+  created_at: Date;
+}
 
 // Database connection pool
 const pool = new Pool({
@@ -29,27 +37,27 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
-app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'healthy', 
+app.get('/api/health', (_req, res) => {
+  res.json({
+    status: 'healthy',
     service: 'node-service',
     timestamp: new Date().toISOString()
   });
 });
 
-app.get('/api/node/hello', (req, res) => {
-  res.json({ 
+app.get('/api/node/hello', (_req, res) => {
+  res.json({
     message: 'Hello from Node.js service!',
     version: '1.0.0'
   });
 });
 
-app.get('/api/node/data', async (req, res) => {
+app.get('/api/node/data', async (_req, res) => {
   try {
-    const result = await pool.query(
+    const result = await pool.query<DataItem>(
       "SELECT id, name, type, description, created_at FROM items WHERE type = 'node' ORDER BY id"
     );
-    res.json({ 
+    res.json({
       data: result.rows
     });
   } catch (err) {
@@ -59,7 +67,7 @@ app.get('/api/node/data', async (req, res) => {
 });
 
 // Error handling
-app.use((err, req, res, next) => {
+app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   console.error(err.stack);
   res.status(500).json({ error: 'Something went wrong!' });
 });
@@ -67,4 +75,3 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`Node.js service running on port ${PORT}`);
 });
-

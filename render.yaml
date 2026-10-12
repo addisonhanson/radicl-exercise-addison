@@ -29,7 +29,7 @@ services:
     env: node
     region: oregon
     plan: free
-    buildCommand: "cd backend/node-service && npm install"
+    buildCommand: "cd backend/node-service && npm install --include=dev && npm run build"
     startCommand: "cd backend/node-service && npm start"
     envVars:
       - key: DATABASE_URL

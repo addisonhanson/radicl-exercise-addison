@@ -5,11 +5,17 @@ import {
   getSortedRowModel,
   getFilteredRowModel,
   flexRender,
+  type ColumnDef,
 } from '@tanstack/react-table'
+import type { DataItem } from '../types/api'
 import './DataTable.css'
 
-export function DataTable({ data }) {
-  const columns = useMemo(
+interface DataTableProps {
+  data: DataItem[]
+}
+
+export function DataTable({ data }: DataTableProps) {
+  const columns = useMemo<ColumnDef<DataItem>[]>(
     () => [
       {
         accessorKey: 'id',
@@ -26,7 +32,7 @@ export function DataTable({ data }) {
         header: 'Type',
         size: 120,
         cell: ({ getValue }) => {
-          const type = getValue()
+          const type = getValue<string>()
           return (
             <span className={`type-badge type-${type}`}>
               {type}

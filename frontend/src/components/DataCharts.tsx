@@ -13,13 +13,24 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts'
+import type { DataItem } from '../types/api'
 import './DataCharts.css'
+
+// Type alias (not interface) so it satisfies Recharts' index-signature data type
+type TypeCount = {
+  type: string
+  count: number
+}
+
+interface DataChartsProps {
+  data: DataItem[]
+}
 
 const COLORS = ['#667eea', '#764ba2', '#10b981', '#f59e0b', '#ef4444']
 
-export function DataCharts({ data }) {
+export function DataCharts({ data }: DataChartsProps) {
   // Prepare data for type distribution
-  const typeDistribution = data.reduce((acc, item) => {
+  const typeDistribution = data.reduce<TypeCount[]>((acc, item) => {
     const existing = acc.find(d => d.type === item.type)
     if (existing) {
       existing.count++
@@ -54,7 +65,7 @@ export function DataCharts({ data }) {
               outerRadius={100}
               label={({ type, count }) => `${type}: ${count}`}
             >
-              {typeDistribution.map((entry, index) => (
+              {typeDistribution.map((_entry, index) => (
                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
               ))}
             </Pie>
