@@ -2,7 +2,7 @@
 -- Security Dashboard Schema
 -- ============================================
 -- Tables, constraints, indexes and triggers for the security operations
--- dashboard. Seed data lives in 03-security-seed.sql.
+-- dashboard. Seed data lives in 02-security-seed.sql.
 --
 -- Postgres only runs files in docker-entrypoint-initdb.d against an EMPTY
 -- data volume. To apply changes to this file locally:
@@ -22,8 +22,6 @@ CREATE TYPE asset_environment AS ENUM ('Production', 'Staging', 'Development');
 -- ============================================
 -- Shared updated_at trigger function
 -- ============================================
--- Also defined in 01-init.sql; redefined here so this schema has no
--- dependency on the placeholder tables.
 
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$

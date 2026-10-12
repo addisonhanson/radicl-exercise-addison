@@ -44,8 +44,6 @@ Successful responses are wrapped as `{ "data": ... }`, errors as `{ "error": "me
 |----------|-------------|
 | `GET /api/health` | Service health plus dependency status (`database`, `go_service`). Returns `degraded` when a dependency is down. |
 | `GET /api/analytics/summary` | Dashboard KPI summary, computed by the Go service |
-| `GET /api/node/hello` | Starter placeholder |
-| `GET /api/node/data` | Starter placeholder |
 
 When the Go service fails, analytics routes return `503` (unreachable),
 `504` (timed out) or `502` (upstream error) instead of crashing.

@@ -126,23 +126,27 @@ for i in {1..30}; do
 done
 echo ""
 
-# Check if database schema exists and initialize if needed
+# Check that the security schema exists. Postgres runs database/init/*.sql
+# itself on first start of an empty volume, so wait for that rather than
+# applying the scripts here. A volume created before the current schema
+# needs a reset.
 echo "🔍 Checking database schema..."
-SCHEMA_EXISTS=$($DOCKER_COMPOSE exec -T postgres psql -U radicl_user -d radicl_db -tAc "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'users');" 2>/dev/null)
+SCHEMA_EXISTS=""
+for i in {1..30}; do
+    SCHEMA_EXISTS=$($DOCKER_COMPOSE exec -T postgres psql -U radicl_user -d radicl_db -tAc "SELECT to_regclass('public.assets') IS NOT NULL;" 2>/dev/null)
+    [ "$SCHEMA_EXISTS" = "t" ] && break
+    sleep 1
+done
 
 if [ "$SCHEMA_EXISTS" = "t" ]; then
-    echo "✅ Database schema already initialized"
+    echo "✅ Database schema initialized"
 else
-    echo "📝 Initializing database schema..."
-    if $DOCKER_COMPOSE exec -T postgres psql -U radicl_user -d radicl_db < database/init/01-init.sql > /dev/null 2>&1; then
-        echo "✅ Database initialized successfully!"
-    else
-        echo "⚠️  Failed to initialize database. Trying alternative method..."
-        # Alternative method: copy file into container and execute
-        docker cp database/init/01-init.sql radicl-postgres:/tmp/01-init.sql
-        $DOCKER_COMPOSE exec -T postgres psql -U radicl_user -d radicl_db -f /tmp/01-init.sql
-        echo "✅ Database initialized successfully!"
-    fi
+    echo "❌ Security schema not found in the database."
+    echo "   The data volume was probably created before the current schema."
+    echo "   Reset it (this deletes local database data) and re-run this script:"
+    echo ""
+    echo "   $DOCKER_COMPOSE down -v && $DOCKER_COMPOSE up -d"
+    exit 1
 fi
 echo ""
 

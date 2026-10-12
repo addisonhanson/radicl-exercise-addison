@@ -56,9 +56,12 @@ The service will run on `http://localhost:3002`
 
 ## API Endpoints
 
+Analytics endpoints are consumed by the Node.js gateway rather than the
+frontend directly. Responses are wrapped as `{"data": ...}`, errors as
+`{"error": "message"}`.
+
 - `GET /api/health` - Health check endpoint
-- `GET /api/go/hello` - Hello world endpoint
-- `GET /api/go/data` - Fetches items from PostgreSQL database where type='go'
+- `GET /api/analytics/summary` - Dashboard KPIs (open incidents, assets at risk, events in 24h, MTTD, MTTR, active threat campaigns), each compared with the previous period
 
 ## Scripts
 

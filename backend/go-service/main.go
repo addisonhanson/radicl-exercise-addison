@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -13,6 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	"github.com/radicl/go-service/internal/analytics"
+	"github.com/radicl/go-service/internal/httpx"
 	"github.com/rs/cors"
 )
 
@@ -22,75 +22,14 @@ type HealthResponse struct {
 	Timestamp string `json:"timestamp"`
 }
 
-type HelloResponse struct {
-	Message string `json:"message"`
-	Version string `json:"version"`
-}
-
-type DataItem struct {
-	ID          int       `json:"id"`
-	Name        string    `json:"name"`
-	Type        string    `json:"type"`
-	Description *string   `json:"description,omitempty"`
-	CreatedAt   time.Time `json:"created_at"`
-}
-
-type DataResponse struct {
-	Data []DataItem `json:"data"`
-}
-
 var dbPool *pgxpool.Pool
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(HealthResponse{
+	httpx.WriteJSON(w, http.StatusOK, HealthResponse{
 		Status:    "healthy",
 		Service:   "go-service",
 		Timestamp: time.Now().Format(time.RFC3339),
 	})
-}
-
-func helloHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(HelloResponse{
-		Message: "Hello from Go service!",
-		Version: "1.0.0",
-	})
-}
-
-func dataHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	
-	ctx := context.Background()
-	query := "SELECT id, name, type, description, created_at FROM items WHERE type = 'go' ORDER BY id"
-	
-	rows, err := dbPool.Query(ctx, query)
-	if err != nil {
-		log.Printf("Error querying database: %v", err)
-		http.Error(w, `{"error": "Failed to fetch data from database"}`, http.StatusInternalServerError)
-		return
-	}
-	defer rows.Close()
-	
-	var items []DataItem
-	for rows.Next() {
-		var item DataItem
-		err := rows.Scan(&item.ID, &item.Name, &item.Type, &item.Description, &item.CreatedAt)
-		if err != nil {
-			log.Printf("Error scanning row: %v", err)
-			continue
-		}
-		items = append(items, item)
-	}
-	
-	if err := rows.Err(); err != nil {
-		log.Printf("Error iterating rows: %v", err)
-		http.Error(w, `{"error": "Failed to process data"}`, http.StatusInternalServerError)
-		return
-	}
-	
-	data := DataResponse{Data: items}
-	json.NewEncoder(w).Encode(data)
 }
 
 func main() {
@@ -158,8 +97,6 @@ func main() {
 
 	// Routes
 	r.HandleFunc("/api/health", healthHandler).Methods("GET")
-	r.HandleFunc("/api/go/hello", helloHandler).Methods("GET")
-	r.HandleFunc("/api/go/data", dataHandler).Methods("GET")
 
 	analytics.NewHandler(analytics.NewStore(dbPool)).RegisterRoutes(r)
 
@@ -174,4 +111,3 @@ func main() {
 	log.Printf("Go service running on port %s\n", port)
 	log.Fatal(http.ListenAndServe(addr, handler))
 }
-

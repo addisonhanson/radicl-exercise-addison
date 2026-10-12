@@ -165,21 +165,22 @@ The frontend will run on `http://localhost:5173`
 
 ## API Endpoints
 
+The frontend calls only the Node.js service, which acts as an API gateway and
+proxies analytics requests to the Go service.
+
 ### Node.js Service (Port 3001)
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/health` | GET | Health check |
-| `/api/node/hello` | GET | Hello world message |
-| `/api/node/data` | GET | Sample data array |
+| `/api/health` | GET | Health check, including database and Go service status |
+| `/api/analytics/summary` | GET | Dashboard KPI summary (proxied to Go) |
 
 ### Go Service (Port 3002)
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/api/health` | GET | Health check |
-| `/api/go/hello` | GET | Hello world message |
-| `/api/go/data` | GET | Sample data array |
+| `/api/analytics/summary` | GET | Dashboard KPI summary |
 
 ## Development
 
@@ -313,13 +314,9 @@ DB_SSLMODE=disable
 ## Testing the Setup
 
 1. Open your browser to `http://localhost:5173`
-2. You should see the RADICL Full Stack Application dashboard
-3. The dashboard will show the health status of both backend services
-4. Click the "Fetch Node Data" and "Fetch Go Data" buttons to test API integration
-5. Once data is fetched, you'll see:
-   - **Simple data view** with badges
-   - **Interactive charts** (pie, bar, and line charts)
-   - **Sortable data table** (click column headers to sort)
+2. You should see the RADICL Security Operations dashboard
+3. The Service Status panel shows the Node API, Go analytics service and database as `up`
+4. `curl http://localhost:3001/api/analytics/summary` returns the KPI summary via the Node gateway
 
 ## Production Build
 

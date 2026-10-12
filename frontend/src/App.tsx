@@ -1,11 +1,8 @@
 import { useEffect } from 'react'
+import { Box, Container } from '@mui/material'
 import { Header } from './components/Header'
 import { ServiceStatus } from './components/ServiceStatus'
-import { FetchedDataView } from './components/FetchedDataView'
-import { DataVisualization } from './components/DataVisualization'
-import { GettingStarted } from './components/GettingStarted'
 import { useAppStore } from './store/useAppStore'
-import './App.css'
 
 function App() {
   const fetchHealthStatus = useAppStore((state) => state.fetchHealthStatus)
@@ -15,16 +12,12 @@ function App() {
   }, [fetchHealthStatus])
 
   return (
-    <div className="app">
+    <Box sx={{ minHeight: '100vh' }}>
       <Header />
-
-      <main className="main">
+      <Container maxWidth="xl" component="main" sx={{ py: 3 }}>
         <ServiceStatus />
-        <FetchedDataView />
-        <DataVisualization />
-        <GettingStarted />
-      </main>
-    </div>
+      </Container>
+    </Box>
   )
 }
 

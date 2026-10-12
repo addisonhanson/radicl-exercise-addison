@@ -1,18 +1,12 @@
+export type DependencyStatus = 'up' | 'down'
+
+// Response from the Node gateway's GET /api/health
 export interface HealthStatus {
-  status?: string
-  service?: string
-  timestamp?: string
-  error?: string
-}
-
-export interface DataItem {
-  id: number
-  name: string
-  type: string
-  description?: string | null
-  created_at: string
-}
-
-export interface DataResponse {
-  data: DataItem[] | null
+  status: 'healthy' | 'degraded'
+  service: string
+  timestamp: string
+  dependencies: {
+    database: DependencyStatus
+    go_service: DependencyStatus
+  }
 }

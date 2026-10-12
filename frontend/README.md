@@ -1,199 +1,47 @@
 # React Frontend
 
-A modern React.js frontend built with Vite, designed to communicate with both Node.js and Go backend services.
-
-## Features
-
-- React 19 with Hooks
-- Vite for fast development and optimized builds
-- Modern, responsive UI design
-- Real-time backend service health monitoring
-- Interactive data fetching from multiple backend services
-- **TanStack Table** (React Table v8) for advanced data tables
-- **Recharts** for interactive data visualization
-- Sortable, filterable data tables
-- Multiple chart types: Pie, Bar, and Line charts
+Security operations dashboard built with React 19, TypeScript, Vite 7 and MUI.
 
 ## Setup
 
-1. Install dependencies:
 ```bash
 npm install
-```
-
-2. Start the development server:
-```bash
 npm run dev
 ```
 
-The frontend will run on `http://localhost:5173`
-
-## Available Scripts
-
-- `npm run dev` - Start development server with hot module replacement
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build locally
-- `npm run lint` - Run ESLint
+The frontend runs on `http://localhost:5173`.
 
 ## Backend Integration
 
-The frontend connects to two backend services:
-- **Node.js Service**: `http://localhost:3001`
-- **Go Service**: `http://localhost:3002`
+The frontend talks only to the Node.js API gateway (`http://localhost:3001`
+by default), which proxies analytics requests to the Go service. Override the
+API location with `VITE_NODE_API_URL` (a full URL, a domain, or a Render
+service name).
 
-Make sure both backend services are running before starting the frontend.
+## Available Scripts
 
-## Features
-
-### Service Health Monitoring
-The app automatically checks the health status of both backend services on load and displays their status.
-
-### Data Fetching
-Interactive buttons allow you to fetch sample data from each backend service to demonstrate the integration.
-
-### Interactive Data Table
-- Powered by TanStack Table (React Table v8)
-- Column sorting (click headers)
-- Responsive design
-- Type badges with color coding
-- Displays combined data from both backend services
-
-### Data Visualization
-- Multiple chart types using Recharts
-- **Pie Chart**: Shows distribution of items by type
-- **Bar Chart**: Visualizes item counts by category
-- **Line Chart**: Displays growth trends over time
-- Responsive and interactive charts
-- Hover tooltips for detailed information
+- `npm run dev` - Start the dev server with hot module replacement
+- `npm run build` - Type-check and build for production
+- `npm run typecheck` - Type-check only
+- `npm run preview` - Preview the production build locally
+- `npm run lint` - Run ESLint
 
 ## Technology Stack
 
-- React 19
+- React 19 + TypeScript
 - Vite 7
-- TanStack Table v8 (@tanstack/react-table)
-- Recharts v2
-- ESLint for code quality
-- Modern CSS with responsive design
+- MUI (Material UI) with a dark theme (`src/theme/theme.ts`)
+- Zustand for client state
+- Recharts and TanStack Table (installed for upcoming dashboard visualizations)
 
-## Component Structure
+## Structure
 
 ```
 src/
-├── App.jsx                    # Main application component
-├── App.css                    # Global application styles
-├── components/
-│   ├── DataTable.jsx          # Interactive data table component
-│   ├── DataTable.css          # Table styling
-│   ├── DataCharts.jsx         # Data visualization component
-│   └── DataCharts.css         # Chart styling
-├── main.jsx                   # Application entry point
-└── index.css                  # Base styles
+├── main.tsx              # Entry point: theme provider + CssBaseline
+├── App.tsx               # Page layout
+├── components/           # UI components
+├── store/useAppStore.ts  # Zustand store and API base URL
+├── theme/theme.ts        # MUI theme
+└── types/api.ts          # API response types
 ```
-
-## Using the Components
-
-### DataTable Component
-
-```jsx
-import { DataTable } from './components/DataTable'
-
-const data = [
-  { id: 1, name: 'Item 1', type: 'node' },
-  { id: 2, name: 'Item 2', type: 'go' },
-]
-
-<DataTable data={data} />
-```
-
-Features:
-- Automatic sorting on column headers
-- Customizable columns
-- Responsive design
-- Type-based color coding
-
-### DataCharts Component
-
-```jsx
-import { DataCharts } from './components/DataCharts'
-
-const data = [
-  { id: 1, name: 'Item 1', type: 'node' },
-  { id: 2, name: 'Item 2', type: 'go' },
-]
-
-<DataCharts data={data} />
-```
-
-Displays:
-- Pie chart for type distribution
-- Bar chart for item counts
-- Line chart for trends
-
-## Libraries Used
-
-### TanStack Table (@tanstack/react-table)
-- **Version**: 8.x
-- **Purpose**: Headless UI for building powerful tables
-- **Features**: Sorting, filtering, pagination, custom columns
-- **Documentation**: https://tanstack.com/table/v8
-- **License**: MIT
-
-### Recharts
-- **Version**: 2.x
-- **Purpose**: Composable charting library for React
-- **Features**: Multiple chart types, responsive, customizable
-- **Documentation**: https://recharts.org/
-- **License**: MIT
-
-Both libraries are:
-- ✅ Open source
-- ✅ Actively maintained
-- ✅ Well-documented
-- ✅ Production-ready
-- ✅ TypeScript support
-- ✅ Large community
-
-## Customization
-
-### Adding New Columns to DataTable
-
-Edit `src/components/DataTable.jsx`:
-
-```jsx
-const columns = useMemo(
-  () => [
-    // Add your column here
-    {
-      accessorKey: 'newField',
-      header: 'New Field',
-      size: 150,
-    },
-  ],
-  []
-)
-```
-
-### Adding New Charts
-
-Edit `src/components/DataCharts.jsx` and add any Recharts component:
-
-```jsx
-import { AreaChart, Area } from 'recharts'
-
-<AreaChart data={data}>
-  <Area dataKey="value" fill="#8884d8" />
-</AreaChart>
-```
-
-## Performance
-
-- Components use React.memo and useMemo for optimization
-- Recharts handles responsive sizing automatically
-- TanStack Table is highly performant even with large datasets
-- Lazy loading can be added for very large datasets
-
-## Browser Support
-
-- Modern browsers (Chrome, Firefox, Safari, Edge)
-- Mobile responsive
-- No IE11 support (uses modern JavaScript features)

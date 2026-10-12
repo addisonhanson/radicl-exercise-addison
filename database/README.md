@@ -80,40 +80,44 @@ DB_SSLMODE=disable
 
 ## Database Schema
 
-The database is automatically initialized with the following schema:
+The schema supports the security operations dashboard. See
+`init/01-security-schema.sql` for full definitions, constraints and indexes.
 
 ### Tables
 
-**users**
-- `id` (UUID, Primary Key)
-- `username` (VARCHAR, Unique)
-- `email` (VARCHAR, Unique)
-- `created_at` (TIMESTAMP)
-- `updated_at` (TIMESTAMP)
+**assets**: systems that can be targeted (hostname, type, environment,
+criticality, IP, owning team).
 
-**items**
-- `id` (SERIAL, Primary Key)
-- `name` (VARCHAR)
-- `description` (TEXT)
-- `type` (VARCHAR)
-- `user_id` (UUID, Foreign Key → users.id)
-- `created_at` (TIMESTAMP)
-- `updated_at` (TIMESTAMP)
+**threat_intelligence**: known threats and campaigns (category, risk level,
+indicators of compromise as JSONB, first/last seen).
+
+**security_events**: individual security events, linked to an asset and
+optionally to a known threat. Lifecycle timestamps drive response metrics:
+
+| Column | Meaning |
+|--------|---------|
+| `occurred_at` | When the activity happened |
+| `detected_at` | When it was detected (MTTD = detected - occurred) |
+| `acknowledged_at` | When an analyst picked it up (null while `Active`) |
+| `resolved_at` | When it was closed (MTTR = resolved - detected) |
+
+CHECK constraints keep `status` consistent with these timestamps.
 
 ### Sample Data
 
-The initialization script creates:
-- 3 sample users (john_doe, jane_smith, bob_wilson)
-- 10 sample items with various types (node, go, react)
+`init/02-security-seed.sql` generates a reproducible dataset relative to the
+time the database is initialized:
+- 25 assets and 8 threats
+- ~560 events over the last 30 days, including two attack campaigns and a
+  burst of recent activity with open events to triage
 
 ## Initialization Scripts
 
-SQL scripts in `database/init/` are executed in alphabetical order when the container is first created. The naming convention is:
+SQL scripts in `database/init/` are executed in alphabetical order when the container is first created:
 
 ```
-01-init.sql       # Initial schema and tables
-02-seed.sql       # Additional seed data (optional)
-03-functions.sql  # Stored procedures (optional)
+01-security-schema.sql   # Types, tables, constraints, indexes, triggers
+02-security-seed.sql     # Generated sample data
 ```
 
 **Note:** Scripts only run on first container creation. If you modify scripts:
@@ -163,7 +167,7 @@ docker-compose ps
 
 **Execute SQL queries:**
 ```bash
-docker-compose exec postgres psql -U radicl_user -d radicl_db -c "SELECT * FROM users;"
+docker-compose exec postgres psql -U radicl_user -d radicl_db -c "SELECT * FROM assets;"
 ```
 
 ## Data Persistence
@@ -201,7 +205,7 @@ const pool = new Pool({
 });
 
 // Query example
-const result = await pool.query('SELECT * FROM users');
+const result = await pool.query('SELECT * FROM assets');
 console.log(result.rows);
 ```
 
@@ -235,7 +239,7 @@ if err != nil {
 defer pool.Close()
 
 // Query example
-rows, err := pool.Query(context.Background(), "SELECT * FROM users")
+rows, err := pool.Query(context.Background(), "SELECT * FROM assets")
 ```
 
 ## Troubleshooting

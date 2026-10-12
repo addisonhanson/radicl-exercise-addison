@@ -96,11 +96,6 @@ services:
           name: radicl-node-service
           type: web
           property: host
-      - key: VITE_GO_API_URL
-        fromService:
-          name: radicl-go-service
-          type: web
-          property: host
     headers:
       - path: /*
         name: X-Frame-Options
