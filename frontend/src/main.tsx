@@ -12,7 +12,8 @@ if (!rootElement) {
 createRoot(rootElement).render(
   <StrictMode>
     <ThemeProvider theme={theme}>
-      <CssBaseline />
+      {/* color-scheme: dark gives native scrollbars and form controls dark styling. */}
+      <CssBaseline enableColorScheme />
       <App />
     </ThemeProvider>
   </StrictMode>,

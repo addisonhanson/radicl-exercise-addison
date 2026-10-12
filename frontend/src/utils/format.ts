@@ -23,3 +23,13 @@ export function formatDuration(seconds: number | null): string {
   }
   return `${Math.floor(hours / 24)}d ${hours % 24}h`
 }
+
+// Formats a timestamp (ms since epoch) as a short local date and time, e.g. "Oct 12, 02:15 PM".
+export function formatDateTime(ms: number): string {
+  return new Date(ms).toLocaleString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}

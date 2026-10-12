@@ -11,13 +11,17 @@ function App() {
   const fetchSummary = useAppStore((state) => state.fetchSummary)
   const fetchTimeline = useAppStore((state) => state.fetchTimeline)
   const fetchOpenEvents = useAppStore((state) => state.fetchOpenEvents)
+  const fetchAssetsAtRisk = useAppStore((state) => state.fetchAssetsAtRisk)
+  const fetchThreatOrigins = useAppStore((state) => state.fetchThreatOrigins)
 
   useEffect(() => {
     fetchHealthStatus()
     fetchSummary()
     fetchTimeline()
     fetchOpenEvents()
-  }, [fetchHealthStatus, fetchSummary, fetchTimeline, fetchOpenEvents])
+    fetchAssetsAtRisk()
+    fetchThreatOrigins()
+  }, [fetchHealthStatus, fetchSummary, fetchTimeline, fetchOpenEvents, fetchAssetsAtRisk, fetchThreatOrigins])
 
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>

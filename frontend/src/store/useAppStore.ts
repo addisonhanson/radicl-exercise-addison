@@ -1,5 +1,12 @@
 import { create } from 'zustand'
-import type { AnalyticsSummary, HealthStatus, OpenEvents, Timeline } from '../types/api'
+import type {
+  AnalyticsSummary,
+  AssetsAtRiskList,
+  HealthStatus,
+  OpenEvents,
+  ThreatOrigins,
+  Timeline,
+} from '../types/api'
 
 // Build the API URL from the environment.
 // Render provides service names like "radicl-node-service" via property: host,
@@ -27,6 +34,15 @@ function buildApiUrl(envVar: string | undefined, defaultLocalUrl: string): strin
 // analytics requests to the Go service.
 export const API_URL = buildApiUrl(import.meta.env.VITE_NODE_API_URL, 'http://localhost:3001')
 
+// Fetches a Node analytics endpoint and unwraps its { data } envelope.
+async function getData<T>(path: string): Promise<T> {
+  const response = await fetch(`${API_URL}${path}`)
+  if (!response.ok) {
+    throw new Error(`GET ${path} failed with status ${response.status}`)
+  }
+  return ((await response.json()) as { data: T }).data
+}
+
 interface AppState {
   health: HealthStatus | null
   healthError: string | null
@@ -44,12 +60,24 @@ interface AppState {
   openEventsError: string | null
   openEventsLoading: boolean
 
+  assetsAtRisk: AssetsAtRiskList | null
+  assetsAtRiskError: string | null
+  assetsAtRiskLoading: boolean
+
+  threatOrigins: ThreatOrigins | null
+  threatOriginsError: string | null
+  threatOriginsLoading: boolean
+
   fetchHealthStatus: () => Promise<void>
   fetchSummary: () => Promise<void>
   fetchTimeline: () => Promise<void>
   fetchOpenEvents: () => Promise<void>
+  fetchAssetsAtRisk: () => Promise<void>
+  fetchThreatOrigins: () => Promise<void>
 }
 
+// Analytics actions share one shape: on failure the last good data is kept,
+// so panels show an error alert over stale data rather than blanking out.
 export const useAppStore = create<AppState>((set) => ({
   health: null,
   healthError: null,
@@ -74,16 +102,10 @@ export const useAppStore = create<AppState>((set) => ({
   summaryError: null,
   summaryLoading: true,
 
-  // On failure the last good summary is kept so the cards don't blank out.
   fetchSummary: async () => {
     set({ summaryLoading: true })
     try {
-      const response = await fetch(`${API_URL}/api/analytics/summary`)
-      if (!response.ok) {
-        throw new Error(`Analytics summary failed with status ${response.status}`)
-      }
-      const body = (await response.json()) as { data: AnalyticsSummary }
-      set({ summary: body.data, summaryError: null })
+      set({ summary: await getData<AnalyticsSummary>('/api/analytics/summary'), summaryError: null })
     } catch (error) {
       console.error('Error fetching analytics summary:', error)
       set({ summaryError: 'Analytics unavailable' })
@@ -98,12 +120,7 @@ export const useAppStore = create<AppState>((set) => ({
   fetchTimeline: async () => {
     set({ timelineLoading: true })
     try {
-      const response = await fetch(`${API_URL}/api/analytics/timeline`)
-      if (!response.ok) {
-        throw new Error(`Event timeline failed with status ${response.status}`)
-      }
-      const body = (await response.json()) as { data: Timeline }
-      set({ timeline: body.data, timelineError: null })
+      set({ timeline: await getData<Timeline>('/api/analytics/timeline'), timelineError: null })
     } catch (error) {
       console.error('Error fetching event timeline:', error)
       set({ timelineError: 'Event timeline unavailable' })
@@ -118,16 +135,47 @@ export const useAppStore = create<AppState>((set) => ({
   fetchOpenEvents: async () => {
     set({ openEventsLoading: true })
     try {
-      const response = await fetch(`${API_URL}/api/analytics/open-events`)
-      if (!response.ok) {
-        throw new Error(`Open events failed with status ${response.status}`)
-      }
-      const body = (await response.json()) as { data: OpenEvents }
-      set({ openEvents: body.data, openEventsError: null })
+      set({ openEvents: await getData<OpenEvents>('/api/analytics/open-events'), openEventsError: null })
     } catch (error) {
       console.error('Error fetching open events:', error)
       set({ openEventsError: 'Open incidents unavailable' })
     }
     set({ openEventsLoading: false })
+  },
+
+  assetsAtRisk: null,
+  assetsAtRiskError: null,
+  assetsAtRiskLoading: true,
+
+  fetchAssetsAtRisk: async () => {
+    set({ assetsAtRiskLoading: true })
+    try {
+      set({
+        assetsAtRisk: await getData<AssetsAtRiskList>('/api/analytics/assets-at-risk'),
+        assetsAtRiskError: null,
+      })
+    } catch (error) {
+      console.error('Error fetching assets at risk:', error)
+      set({ assetsAtRiskError: 'Assets at risk unavailable' })
+    }
+    set({ assetsAtRiskLoading: false })
+  },
+
+  threatOrigins: null,
+  threatOriginsError: null,
+  threatOriginsLoading: true,
+
+  fetchThreatOrigins: async () => {
+    set({ threatOriginsLoading: true })
+    try {
+      set({
+        threatOrigins: await getData<ThreatOrigins>('/api/analytics/threat-origins'),
+        threatOriginsError: null,
+      })
+    } catch (error) {
+      console.error('Error fetching threat origins:', error)
+      set({ threatOriginsError: 'Threat origins unavailable' })
+    }
+    set({ threatOriginsLoading: false })
   },
 }))

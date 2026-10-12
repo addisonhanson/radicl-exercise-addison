@@ -5,8 +5,6 @@ import type { Severity } from '../../types/api'
 import { OpenEventsTable } from './OpenEventsTable'
 import { SeverityDonut } from './SeverityDonut'
 
-const PANEL_HEIGHT = 320
-
 // Severity donut beside the open events that make it up. Selecting a
 // severity in the donut filters the table to it.
 export function OpenIncidentsChart() {
@@ -19,17 +17,17 @@ export function OpenIncidentsChart() {
   }, [openEvents, selected])
 
   if (openEventsLoading && !openEvents) {
-    return <Skeleton variant="rounded" height={PANEL_HEIGHT} />
+    return <Skeleton variant="rounded" sx={{ flex: 1 }} />
   }
   if (!openEvents) {
     return <Alert severity="error">{openEventsError ?? 'Open incidents unavailable'}</Alert>
   }
 
   return (
-    <>
+    <Stack sx={{ flex: 1, minHeight: 0 }}>
       {openEventsError && <Alert severity="error" sx={{ mb: 2 }}>{openEventsError}</Alert>}
-      <Grid container spacing={3}>
-        <Grid size={{ xs: 12, md: 4 }}>
+      <Grid container spacing={3} sx={{ flex: 1, minHeight: 0 }}>
+        <Grid size={{ xs: 12, md: 4 }} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <SeverityDonut
             counts={openEvents.by_severity}
             total={openEvents.total}
@@ -37,16 +35,16 @@ export function OpenIncidentsChart() {
             onSelect={setSelected}
           />
         </Grid>
-        <Grid size={{ xs: 12, md: 8 }}>
+        <Grid size={{ xs: 12, md: 8 }} sx={{ display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%' }}>
           <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 1, minHeight: 24 }}>
             <Typography variant="body2" color="text.secondary">
               {events.length} open {events.length === 1 ? 'incident' : 'incidents'}
             </Typography>
             {selected && <Chip size="small" label={selected} onDelete={() => setSelected(null)} />}
           </Stack>
-          <OpenEventsTable events={events} maxHeight={PANEL_HEIGHT} />
+          <OpenEventsTable events={events} />
         </Grid>
       </Grid>
-    </>
+    </Stack>
   )
 }

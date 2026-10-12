@@ -93,3 +93,45 @@ export interface OpenEvents {
   by_severity: SeverityCounts
   events: OpenEventItem[]
 }
+
+// Response for GET /api/analytics/assets-at-risk: every asset with at least
+// one open event, riskiest first. risk_score (0-100) is the highest open
+// threat score weighted by asset criticality.
+export type Environment = 'Production' | 'Staging' | 'Development'
+
+export type AssetAtRisk = {
+  asset_id: number
+  hostname: string
+  asset_type: string
+  environment: Environment
+  criticality: Severity
+  owner_team: string | null
+  open_events: number
+  critical_events: number
+  top_severity: Severity
+  max_threat_score: number
+  risk_score: number
+  last_detected_at: string
+}
+
+export interface AssetsAtRiskList {
+  generated_at: string
+  assets: AssetAtRisk[]
+}
+
+// Response for GET /api/analytics/threat-origins: event counts by ISO 3166-1
+// alpha-2 source country over the last `days` days, busiest first.
+export type CountryOrigin = {
+  country: string
+  events: number
+  critical_events: number
+  distinct_sources: number
+}
+
+export interface ThreatOrigins {
+  generated_at: string
+  days: number
+  total: number
+  unknown: number
+  countries: CountryOrigin[]
+}
